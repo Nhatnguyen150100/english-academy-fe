@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer base {
+  .container {
+      max-width: 1440px !important;
+      background-color: #fff;
+  }
+}

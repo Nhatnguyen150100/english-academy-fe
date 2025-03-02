@@ -1,0 +1,1 @@
+export type IStatus = 'idle' | 'error' | 'success' | 'pending';
