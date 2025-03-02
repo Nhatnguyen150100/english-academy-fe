@@ -47,35 +47,48 @@ export default function LoginAdminPage() {
       {isLoggedIn ? (
         <Navigate to={DEFINE_ROUTERS.admin} replace />
       ) : (
-        <div className="flex h-full w-full justify-center items-center">
+        <div
+          className="flex h-[100vh] w-full justify-center items-center"
+          style={{
+            backgroundImage: `url(/background_desktop.jpg)`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+          }}
+        >
           <section className="h-full">
-            <div className="container h-full p-10">
-              <div className="g-6 flex h-full flex-wrap items-center justify-center text-neutral-800 dark:text-neutral-200">
+              <div className="g-6 flex h-full flex-wrap items-center justify-center text-neutral-200">
                 <div className="w-full">
-                  <div className="block rounded-lg bg-white shadow-lg dark:bg-blue-950">
+                  <div className="block rounded-lg bg-white shadow-lg">
                     <div className="g-0 lg:flex lg:flex-wrap">
                       <div className="px-4 md:px-0 lg:w-full">
                         <div className="md:mx-6 md:p-12">
-                          {/* <!--Logo--> */}
-                          <div className="text-center">
-                            <img
-                              className="mx-auto w-32"
-                              src="https://flowbite.com/docs/images/logo.svg"
-                              alt="logo"
+                          <div className="text-center flex flex-col justify-center items-center">
+                          <img
+                              className="h-[120px] w-[120px] object-cover rounded-full mb-4"
+                              src="/english_icon.png"
+                              alt="English Academy Logo"
                             />
-                            <h4 className="mb-12 mt-1 pb-1 text-xl font-semibold">
-                              Admin of KanjiWeb
+                            <h4 className="mb-6 mt-1 pb-1 text-2xl font-semibold max-w-[460px] text-blue-950">
+                              ADMIN of English Academy
                             </h4>
                           </div>
 
                           <form>
-                            <p className="mb-4">Please login to your account</p>
-                            {/* <!--Username input--> */}
+                            <p className="mb-4 text-blue-950">
+                              Login your account
+                            </p>
+                            {/* <!--email input--> */}
                             <Input
                               type="text"
                               placeholder="Email"
                               className="mb-4"
                               value={form.email}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  onHandleSubmit();
+                                }
+                              }}
                               onChange={(e) => {
                                 setForm((pre) => ({
                                   ...pre,
@@ -88,7 +101,12 @@ export default function LoginAdminPage() {
                               placeholder="Password"
                               className="mb-4"
                               value={form.password}
-                              onChange={(e) => {
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  onHandleSubmit();
+                                }
+                              }}
+                              onChange={(e: any) => {
                                 setForm((pre) => ({
                                   ...pre,
                                   password: e.target.value,
@@ -98,11 +116,11 @@ export default function LoginAdminPage() {
                             <div className="mb-12 pb-1 pt-1 text-center">
                               <button
                                 disabled={loading}
-                                className="mb-3 bg-pink-900 inline-block w-full rounded px-6 pb-2 pt-2.5 text-xs font-medium uppercase leading-normal text-white shadow-[0_4px_9px_-0px_rgba(0,0,0,0.2)] transition duration-150 ease-in-out hover:shadow-[0_8px_9px_-4px_rgba(0,0,0,0.1),0_4px_18px_0_rgba(0,0,0,0.2)] focus:shadow-[0_8px_9px_-4px_rgba(0,0,0,0.1),0_4px_18px_0_rgba(0,0,0,0.2)] focus:outline-none focus:ring-0 active:shadow-[0_8px_9px_-4px_rgba(0,0,0,0.1),0_4px_18px_0_rgba(0,0,0,0.2)]"
+                                className="mb-3 text-base bg-blue-950 inline-block w-full rounded px-6 pb-2 pt-2.5  font-medium uppercase leading-normal"
                                 type="button"
                                 onClick={() => onHandleSubmit()}
                               >
-                                Log in
+                                Login
                               </button>
                             </div>
                           </form>
@@ -112,7 +130,6 @@ export default function LoginAdminPage() {
                   </div>
                 </div>
               </div>
-            </div>
           </section>
         </div>
       )}

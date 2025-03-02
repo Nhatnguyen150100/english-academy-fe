@@ -3,14 +3,16 @@ const DEFINE_ROUTERS = {
   admin: '/admin',
   loginAdmin: '/admin/auth/login',
   accountManager: '/admin/account-manager',
+
   blogManager: '/admin/blogs-manager',
+  blogDetail: '/admin/blogs-manager/:blogId',
   
   courseManager: '/admin/course-manager',
   newCourse: '/admin/course-manager/new-course',
   courseDetail: '/admin/course-manager/:courseId',
 
   examDetail: '/admin/course-manager/exam-manager/:examId',
-  newExam: '/admin/course-manager/exam-manager/new-exam',
+  newExam: '/admin/course-manager/exam-manager/new-exam/:courseId',
 };
 
 export default DEFINE_ROUTERS;

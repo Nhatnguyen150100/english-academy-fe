@@ -11,6 +11,7 @@ import BlogManager from '../modules/admin/blog-manager/BlogManager';
 import NewCourse from '../modules/admin/course-manager/NewCourse';
 import ExamDetail from '../modules/admin/course-manager/exam-manager/ExamDetail';
 import NewExam from '../modules/admin/course-manager/exam-manager/NewExam';
+import BlogDetail from '../modules/admin/blog-manager/BlogDetail';
 
 const router = createBrowserRouter([
   {
@@ -30,6 +31,10 @@ const router = createBrowserRouter([
       {
         path: DEFINE_ROUTERS.blogManager,
         element: <BlogManager />,
+      },
+      {
+        path: DEFINE_ROUTERS.blogDetail,
+        element: <BlogDetail />,
       },
       {
         path: DEFINE_ROUTERS.courseManager,

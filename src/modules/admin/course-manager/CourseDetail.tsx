@@ -79,7 +79,7 @@ export default function CourseDetail() {
       >
         Back
       </Button>
-      <Tabs defaultActiveKey="1" items={items} />;
+      <Tabs defaultActiveKey="1" items={items} />
     </>
   );
 }

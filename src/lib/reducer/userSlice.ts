@@ -9,7 +9,7 @@ const initialState: IUser = {
   role: 'USER',
   phone_number: '',
   score: 0,
-  accountType: '',
+  accountType: 'FREE',
   address: '',
   __v: 0,
   createdAt: '',
@@ -24,10 +24,14 @@ export const userSlice = createSlice({
       state = { ...action.payload };
       return state;
     },
+    clearUser: (state) => {
+      state = { ...initialState };
+      return state;
+    }
   },
 });
 
-export const { setUser } = userSlice.actions;
+export const { setUser, clearUser } = userSlice.actions;
 
 const userReducer = userSlice.reducer;
 

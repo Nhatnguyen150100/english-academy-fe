@@ -16,7 +16,7 @@ interface IProps {
 export default function ExamManager({ courseId }: IProps) {
   const [query, setQuery] = useState({
     page: 1,
-    limit: 5,
+    limit: 10,
     name: '',
     total: 0,
   });
@@ -108,7 +108,7 @@ export default function ExamManager({ courseId }: IProps) {
     try {
       setLoading(true);
       const rs = await examService.getExamList(courseId, query);
-      console.log("🚀 ~ handleGetExamList ~ rs:", rs)
+      console.log('🚀 ~ handleGetExamList ~ rs:', rs);
       setExamList(rs.data.data);
       setQuery((pre) => ({
         ...pre,
@@ -120,7 +120,9 @@ export default function ExamManager({ courseId }: IProps) {
   };
 
   const handleClickRow = (exam: IExam) => {
-    navigate(`/admin/course-manager/exam-manager/${exam._id}`);
+    navigate(
+      `/admin/course-manager/exam-manager/${exam._id}?courseId=${courseId}`,
+    );
   };
 
   useEffect(() => {
@@ -136,7 +138,7 @@ export default function ExamManager({ courseId }: IProps) {
           icon={<PlusOutlined />}
           iconPosition="start"
           onClick={() => {
-            navigate(DEFINE_ROUTERS.newExam);
+            navigate(DEFINE_ROUTERS.newExam.replace(':courseId', courseId));
           }}
         >
           Add new exam
@@ -148,7 +150,7 @@ export default function ExamManager({ courseId }: IProps) {
         <div className="w-full">
           <Table<IExam>
             rowKey="id"
-            className='cursor-pointer'
+            className="cursor-pointer"
             columns={columns}
             dataSource={examList}
             onRow={(record) => ({

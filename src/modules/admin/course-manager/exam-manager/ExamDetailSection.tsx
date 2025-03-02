@@ -14,12 +14,13 @@ import GeneralLoading from '../../../../components/base/GeneralLoading';
 import Visibility from '../../../../components/base/visibility';
 
 interface IProps {
+  courseId: string;
   examProps?: IExamDetail;
 }
 
 const STARTED_QUESTION_DEFAULT = 1;
 
-export default function ExamDetailSection({ examProps }: IProps) {
+export default function ExamDetailSection({ courseId, examProps }: IProps) {
   const navigate = useNavigate();
   const [examInfo, setExamInfo] = useState<TExamInfo>({
     name: examProps?.name ?? '',
@@ -147,6 +148,10 @@ export default function ExamDetailSection({ examProps }: IProps) {
   };
 
   const handleSubmit = async () => {
+    if(!courseId) {
+      message.error('Please select a course to create an exam');
+      return;
+    }
     if (!(examInfo.name && examInfo.level && examInfo.timeExam)) {
       message.error(
         'Please enter exam information before submitting (including name, level, time limit)',
@@ -162,7 +167,7 @@ export default function ExamDetailSection({ examProps }: IProps) {
       const data = {
         name: examInfo.name,
         level: examInfo.level,
-        timeFinish: examInfo.timeExam,
+        timeExam: examInfo.timeExam,
         description: examInfo.description,
         questions: listQuestions.map((question) => ({
           order: question.order,
@@ -173,7 +178,7 @@ export default function ExamDetailSection({ examProps }: IProps) {
       };
       const rs = examProps?._id
         ? await examService.updateExam(examProps?._id, data)
-        : await examService.createExam(data);
+        : await examService.createExam({...data, courseId});
       message.success(rs.message);
     } finally {
       setLoading(false);

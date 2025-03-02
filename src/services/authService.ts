@@ -1,6 +1,9 @@
 import axiosRequest from '../plugins/request';
 import { IChangePass, ILogin, IResponseLogin } from '../types/auth.tyes';
 import { IBaseResponse } from '../types/response.types';
+import { IUser } from '../types/user.types';
+import onRemoveParams from '../utils/functions/on-remove-params';
+import { IPagination } from './pagination.types';
 
 class AuthService {
   private _prefixURL = '/v1/auth';
@@ -8,6 +11,28 @@ class AuthService {
   public async login(data: ILogin): Promise<IBaseResponse<IResponseLogin>> {
     try {
       const rs = await axiosRequest.post(`${this._prefixURL}/login`, data);
+      return Promise.resolve(rs.data);
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+
+  public async getListUser(parameters: Record<string, any>): Promise<IBaseResponse<IPagination<IUser>>> {
+    try {
+      const rs = await axiosRequest.get(`${this._prefixURL}/list-user`, {
+        params: onRemoveParams(parameters),
+      });
+      return Promise.resolve(rs.data);
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+
+  public async updateAccountType(userId: string, accountType: "PREMIUM" | "FREE"): Promise<IBaseResponse<IUser>> {
+    try {
+      const rs = await axiosRequest.put(`${this._prefixURL}/update-account-type/${userId}`, {
+        accountType,
+      });
       return Promise.resolve(rs.data);
     } catch (error) {
       return Promise.reject(error);

@@ -17,7 +17,7 @@ import { ICourse } from '../../../types/course.type';
 export default function CourseManager() {
   const [query, setQuery] = useState({
     page: 1,
-    limit: 5,
+    limit: 10,
     name: '',
     total: 0
   });
@@ -111,7 +111,7 @@ export default function CourseManager() {
 
   return (
     <div className="flex flex-col justify-start items-center space-y-5">
-      <h1 className="font-bold text-3xl">Exam Manager</h1>
+      <h1 className="font-bold text-3xl">Courses Manager</h1>
       <div className="flex flex-row justify-between items-center w-full">
         <BaseSearch
           value={query.name!}

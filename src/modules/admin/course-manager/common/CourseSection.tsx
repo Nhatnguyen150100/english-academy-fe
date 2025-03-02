@@ -19,7 +19,6 @@ type FieldType = {
 };
 
 export default function CourseSection({ item, handleSubmit }: IProps) {
-  console.log("🚀 ~ CourseSection ~ item:", item)
   const [form] = Form.useForm();
 
   const onFinish: FormProps<FieldType>['onFinish'] = async (values) => {

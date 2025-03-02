@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { IExamDetail } from '../../../../types/exam.types';
 import { examService } from '../../../../services';
 import Visibility from '../../../../components/base/visibility';
@@ -10,6 +10,10 @@ import { ArrowLeftOutlined } from '@ant-design/icons';
 export default function ExamDetail() {
   const navigate = useNavigate();
   const { examId } = useParams<{ examId: string }>();
+  const [searchParams] = useSearchParams();
+
+  const courseId = searchParams.get('courseId');
+
   const [exam, setExam] = useState<IExamDetail>();
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -42,10 +46,10 @@ export default function ExamDetail() {
       <div className="flex w-full flex-col justify-center items-center space-y-5">
         <h1 className="font-bold text-3xl">Exam Detail</h1>
         <Visibility
-          visibility={Boolean(exam?._id)}
+          visibility={Boolean(exam?._id && courseId)}
           suspenseComponent={loading ? <Spin /> : <Empty />}
         >
-          <ExamDetailSection examProps={exam} />
+          <ExamDetailSection examProps={exam} courseId={courseId!} />
         </Visibility>
       </div>
     </>

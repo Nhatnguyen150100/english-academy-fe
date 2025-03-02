@@ -5,7 +5,7 @@ export interface IUser {
   role: IRole;
   phone_number: string;
   score: number;
-  accountType: string;
+  accountType: "FREE" | "PREMIUM";
   address: string;
   __v: number;
   createdAt: string;

@@ -1,28 +1,31 @@
 import { Link, useLocation } from "react-router-dom";
-import { LoginOutlined, PieChartOutlined } from "@ant-design/icons";
+import { AuditOutlined, FormOutlined, LoginOutlined, UserOutlined } from "@ant-design/icons";
 import { Divider } from "antd";
 import DEFINE_ROUTERS from "../../constants/routers-mapper";
 import cookiesStore from "../../plugins/cookiesStore";
 import isChildUrl from "../../utils/functions/check-active-router";
+import { useDispatch } from "react-redux";
+import { clearUser } from "../../lib/reducer/userSlice";
 
 const Sidebar = () => {
+  const dispatch = useDispatch();
   const location = useLocation();
 
   const menuItems = [
     {
       path: DEFINE_ROUTERS.admin,
       label: "Account manager",
-      icon: <PieChartOutlined />,
+      icon: <UserOutlined />,
     },
     {
       path: DEFINE_ROUTERS.blogManager,
       label: "Blog manager",
-      icon: <PieChartOutlined />,
+      icon: <FormOutlined />,
     },
     {
       path: DEFINE_ROUTERS.courseManager,
       label: "Course manager",
-      icon: <PieChartOutlined />,
+      icon: <AuditOutlined />,
     },
   ];
 
@@ -30,6 +33,7 @@ const Sidebar = () => {
     cookiesStore.remove("admin");
     cookiesStore.remove("access_token");
     window.location.href = DEFINE_ROUTERS.home;
+    dispatch(clearUser());
   };
 
   return (
