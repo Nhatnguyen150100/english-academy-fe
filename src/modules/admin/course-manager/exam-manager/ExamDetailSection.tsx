@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Button, Input, message, Radio } from 'antd';
+import { Button, Input, message, Radio, Select, Tag } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
 import {
   ArrowLeftOutlined,
@@ -8,19 +8,34 @@ import {
   PlusOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { IExamDetail, IOptionsLocal, IQuestionRequest, TExamInfo } from '../../../../types/exam.types';
+import {
+  IExamDetail,
+  IOptionsLocal,
+  IQuestionRequest,
+  TExamInfo,
+  TExamType,
+} from '../../../../types/exam.types';
 import { examService } from '../../../../services';
 import GeneralLoading from '../../../../components/base/GeneralLoading';
 import Visibility from '../../../../components/base/visibility';
+import { DndContext, DragEndEvent } from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { SortableItem } from '../../../../components/base/SortableItem';
+import { cloneDeep } from 'lodash';
+import isArrayOfStrings from '../../../../utils/functions/isArrayofStrings';
 
 interface IProps {
-  courseId: string;
+  chapterId: string;
   examProps?: IExamDetail;
 }
 
 const STARTED_QUESTION_DEFAULT = 1;
 
-export default function ExamDetailSection({ courseId, examProps }: IProps) {
+export default function ExamDetailSection({ chapterId, examProps }: IProps) {
   const navigate = useNavigate();
   const [examInfo, setExamInfo] = useState<TExamInfo>({
     name: examProps?.name ?? '',
@@ -32,10 +47,15 @@ export default function ExamDetailSection({ courseId, examProps }: IProps) {
     examProps?.questions.map(
       (q): IQuestionRequest => ({
         ...q,
+        type: q.type ?? 'MCQ',
         options: q.options.map((option, index) => ({
           id: index,
           content: option.content,
         })),
+        correctAnswer:
+          q.type === 'ARRANGE'
+            ? (q.correctAnswer as string[]).map(String)
+            : q.correctAnswer,
       }),
     ) ?? [],
   );
@@ -54,6 +74,7 @@ export default function ExamDetailSection({ courseId, examProps }: IProps) {
   const handleAddNewQuestion = () => {
     const newQuestion: IQuestionRequest = {
       order: listQuestions.length + 1,
+      type: 'MCQ',
       content: '',
       options: [],
       correctAnswer: '',
@@ -61,6 +82,246 @@ export default function ExamDetailSection({ courseId, examProps }: IProps) {
     setListQuestions([...listQuestions, newQuestion]);
     setCurrentOrder(newQuestion.order);
   };
+
+  const handleUpdateQuestionType = (type: TExamType) => {
+    const updatedQuestion: IQuestionRequest = {
+      ...currentQuestion!,
+      type,
+      correctAnswer: type === 'MCQ' ? '' : [],
+    };
+    const updatedListQuestions = listQuestions.map((question) =>
+      question.order === currentOrder ? updatedQuestion : question,
+    );
+    setListQuestions(updatedListQuestions);
+  };
+
+  const onCheckDuplicateAnswer = (value: string) => {
+    const isDuplicate =
+      currentQuestion?.type === 'MCQ'
+        ? currentQuestion?.correctAnswer === value
+        : currentQuestion?.correctAnswer.includes(value);
+    return isDuplicate;
+  };
+
+  const handleUpdateOptionContent = (
+    id: number,
+    value: string,
+    isCorrectAnswer: boolean,
+  ) => {
+    if (onCheckDuplicateAnswer(value)) {
+      message.error('Duplicate answer');
+      return;
+    }
+    const updatedQuestion: IQuestionRequest = {
+      ...currentQuestion!,
+      correctAnswer: isCorrectAnswer
+        ? value
+        : currentQuestion?.correctAnswer ??
+          (currentQuestion?.type === 'MCQ' ? '' : []),
+      options:
+        currentQuestion?.options.map((option) =>
+          option.id === id ? { ...option, content: value } : option,
+        ) ?? [],
+    };
+    if (updatedQuestion.type === 'ARRANGE') {
+      updatedQuestion.correctAnswer = updatedQuestion.options.map(
+        (opt) => opt.content,
+      );
+    }
+    const updatedListQuestions = listQuestions?.map((question) => {
+      return question.order === currentOrder ? updatedQuestion : question;
+    });
+    setListQuestions(updatedListQuestions);
+  };
+
+  const handleUpdateCorrectAnswer = (value: string | string[]) => {
+    const updatedQuestion: IQuestionRequest = {
+      ...currentQuestion!,
+      correctAnswer: value,
+    };
+    const updatedListQuestions = listQuestions.map((question) =>
+      question.order === currentOrder ? updatedQuestion : question,
+    );
+    setListQuestions(updatedListQuestions);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    if (!currentQuestion || currentQuestion.type !== 'ARRANGE') return;
+
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = currentQuestion.correctAnswer.indexOf(
+        active.id.toString(),
+      );
+      const newIndex = currentQuestion.correctAnswer.indexOf(
+        over.id.toString(),
+      );
+
+      const newCorrectAnswer = arrayMove(
+        currentQuestion.correctAnswer as string[],
+        oldIndex,
+        newIndex,
+      );
+
+      const updatedQuestion: IQuestionRequest = {
+        ...currentQuestion,
+        correctAnswer: newCorrectAnswer,
+        isInitialOrder: false,
+      };
+
+      const updatedListQuestions = listQuestions.map((q) =>
+        q.order === currentOrder ? updatedQuestion : q,
+      );
+      setListQuestions(updatedListQuestions);
+    }
+  };
+
+  const renderAnswerSection = () => {
+    if (!currentQuestion) return null;
+
+    switch (currentQuestion.type) {
+      case 'MCQ':
+        return (
+          <>
+            <Visibility visibility={currentQuestion.options.length > 0}>
+              {currentQuestion.options.map((option) => (
+                <div
+                  key={option.id}
+                  className="grid grid-cols-12 gap-x-3 w-[60%] items-center justify-items-start"
+                >
+                  <Input
+                    size="large"
+                    className={`col-span-8 ${
+                      option.content === currentQuestion.correctAnswer &&
+                      'border-green-600 border-[2px]'
+                    }`}
+                    value={option.content}
+                    onChange={(e) => {
+                      handleUpdateOptionContent(
+                        option.id,
+                        e.target.value,
+                        option.content === currentQuestion.correctAnswer,
+                      );
+                    }}
+                  />
+                  <Button
+                    variant="solid"
+                    className="col-span-1"
+                    color="danger"
+                    shape="default"
+                    onClick={() => {
+                      handleDeleteOptionAnswer(option.id);
+                    }}
+                    icon={<DeleteOutlined />}
+                  />
+                  <div className="col-span-3 flex flex-row justify-between items-center space-x-2">
+                    <Radio
+                      value={option.content}
+                      checked={option.content === currentQuestion.correctAnswer}
+                      onChange={(e) => {
+                        handleUpdateCorrectAnswer(e.target.value);
+                      }}
+                    />
+                    <Visibility
+                      visibility={
+                        option.content === currentQuestion.correctAnswer
+                      }
+                    >
+                      <span className="text-base font-semibold text-green-600">
+                        Correct answer
+                      </span>
+                    </Visibility>
+                  </div>
+                </div>
+              ))}
+            </Visibility>
+            <Button onClick={handleAddNewOptionAnswer}>
+              Add new option answer
+            </Button>
+          </>
+        );
+
+      case 'ARRANGE':
+        return (
+          <div className="space-y-4">
+            <div className="flex flex-col space-y-2">
+              <span className="font-semibold">Các thành phần:</span>
+              {currentQuestion.options.map((option, index) => (
+                <div key={option.id} className="flex items-center gap-2 mb-2">
+                  <Input
+                    value={option.content}
+                    onChange={(e) =>
+                      handleUpdateOptionContent(
+                        option.id,
+                        e.target.value,
+                        false,
+                      )
+                    }
+                  />
+                  <Button
+                    danger
+                    onClick={() => handleDeleteOptionAnswer(option.id)}
+                    icon={<DeleteOutlined />}
+                  />
+                </div>
+              ))}
+              <Button onClick={handleAddNewOptionAnswer}>
+                Thêm thành phần
+              </Button>
+            </div>
+
+            <div className="flex flex-col space-y-2">
+              <span className="font-semibold">Thứ tự đúng:</span>
+              <DndContext onDragEnd={handleDragEnd}>
+                <SortableContext
+                  items={
+                    isArrayOfStrings(currentQuestion.correctAnswer)
+                      ? currentQuestion.correctAnswer
+                      : []
+                  }
+                  strategy={verticalListSortingStrategy}
+                >
+                  {isArrayOfStrings(currentQuestion.correctAnswer) &&
+                    currentQuestion.correctAnswer?.map((answer, index) => (
+                      <div
+                        key={`${answer}-${index}`}
+                        className="flex items-center gap-2 mb-2"
+                      >
+                        <SortableItem key={answer} id={answer}>
+                          <Tag className="px-2 py-1" color="blue-inverse">
+                            {answer}
+                          </Tag>
+                        </SortableItem>
+                      </div>
+                    ))}
+                </SortableContext>
+              </DndContext>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  const renderQuestionTypeSelector = () => (
+    <Select
+      value={currentQuestion?.type}
+      onChange={handleUpdateQuestionType}
+      className="w-60 ml-4"
+      options={[
+        {
+          label: 'Multiple choice test',
+          value: 'MCQ',
+        },
+        {
+          label: 'Complete the sentence',
+          value: 'ARRANGE',
+        },
+      ]}
+    />
+  );
 
   const maxOrderQuestion = useMemo(() => {
     return Math.max(...listQuestions.map((q) => q.order));
@@ -99,56 +360,28 @@ export default function ExamDetailSection({ courseId, examProps }: IProps) {
     setListQuestions(updatedListQuestions);
   };
 
-  const handleUpdateOptionAnswer = (
-    id: number,
-    value: string,
-    isCorrectAnswer = false,
-  ) => {
-    const updatedQuestion: IQuestionRequest = {
-      ...currentQuestion!,
-      correctAnswer: isCorrectAnswer
-        ? value
-        : currentQuestion?.correctAnswer ?? '',
-      options:
-        currentQuestion?.options.map((option) =>
-          option.id === id ? { ...option, content: value } : option,
-        ) ?? [],
-    };
-    const updatedListQuestions = listQuestions?.map((question) => {
-      return question.order === currentOrder ? updatedQuestion : question;
-    });
-    setListQuestions(updatedListQuestions);
-  };
-  const handleUpdateCorrectAnswer = (value: string) => {
-    const updatedQuestion: IQuestionRequest = {
-      ...currentQuestion!,
-      correctAnswer: value,
-    };
-    const updatedListQuestions = listQuestions?.map((question) => {
-      return question.order === currentOrder ? updatedQuestion : question;
-    });
-    setListQuestions(updatedListQuestions);
-  };
-
   const handleDeleteOptionAnswer = (id: number) => {
+    const updatedOptions =
+      currentQuestion?.options
+        .filter((option) => option.id !== id)
+        .map((op, index) => ({
+          id: index + 1,
+          content: op.content,
+        })) ?? [];
     const updatedQuestion: IQuestionRequest = {
       ...currentQuestion!,
-      options:
-        currentQuestion?.options
-          .filter((option) => option.id !== id)
-          .map((op, index) => ({
-            id: index + 1,
-            content: op.content,
-          })) ?? [],
+      options: updatedOptions,
+      correctAnswer: updatedOptions.map((_item) => _item.content),
     };
     const updatedListQuestions = listQuestions?.map((question) => {
       return question.order === currentOrder ? updatedQuestion : question;
     });
+
     setListQuestions(updatedListQuestions);
   };
 
   const handleSubmit = async () => {
-    if(!courseId) {
+    if (!chapterId) {
       message.error('Please select a course to create an exam');
       return;
     }
@@ -162,6 +395,19 @@ export default function ExamDetailSection({ courseId, examProps }: IProps) {
       message.error('Please add at least one question before submitting');
       return;
     }
+    const invalidArrange = listQuestions.some(
+      (question) =>
+        question.type === 'ARRANGE' &&
+        (!Array.isArray(question.correctAnswer) ||
+          question.correctAnswer.some(
+            (ans) => !question.options.some((opt) => opt.content === ans),
+          )),
+    );
+
+    if (invalidArrange) {
+      message.error('Một số câu sắp xếp có đáp án không khớp với options');
+      return;
+    }
     try {
       setLoading(true);
       const data = {
@@ -170,15 +416,18 @@ export default function ExamDetailSection({ courseId, examProps }: IProps) {
         timeExam: examInfo.timeExam,
         description: examInfo.description,
         questions: listQuestions.map((question) => ({
+          type: question.type,
           order: question.order,
           content: question.content,
-          options: question.options.map((option) => ({content: option.content})),
+          options: question.options.map((option) => ({
+            content: option.content,
+          })),
           correctAnswer: question.correctAnswer,
         })),
       };
       const rs = examProps?._id
         ? await examService.updateExam(examProps?._id, data)
-        : await examService.createExam({...data, courseId});
+        : await examService.createExam({ ...data, chapterId });
       message.success(rs.message);
     } finally {
       setLoading(false);
@@ -245,9 +494,12 @@ export default function ExamDetailSection({ courseId, examProps }: IProps) {
       {currentQuestion && (
         <div className="shadow-md rounded-2xl py-4 px-8 flex flex-col justify-start items-start bg-gray-200 space-y-3">
           <div className="w-full flex justify-between items-center">
-            <span className="text-xl font-semibold">
-              Question {currentQuestion.order}
-            </span>
+            <div className="flex items-center">
+              <span className="text-xl font-semibold">
+                Order: {currentQuestion.order}
+              </span>
+              {renderQuestionTypeSelector()}
+            </div>
             <Button
               className="ms-3"
               variant="solid"
@@ -273,7 +525,13 @@ export default function ExamDetailSection({ courseId, examProps }: IProps) {
             <span className="text-lg font-semibold">Content of exam</span>
             <Input
               size="large"
-              value={currentQuestion.content}
+              value={
+                currentQuestion.content
+                  ? currentQuestion.content
+                  : currentQuestion.type === 'ARRANGE'
+                  ? 'Arrange the words into meaningful sentences.'
+                  : ''
+              }
               onChange={(e) => {
                 setListQuestions((pre) => {
                   const updatedQuestion = pre.map((item) => {
@@ -289,66 +547,7 @@ export default function ExamDetailSection({ courseId, examProps }: IProps) {
           </div>
           <div className="flex flex-col justify-start items-start space-y-2 w-full">
             <span className="text-lg font-semibold">Option answer</span>
-            <Visibility visibility={currentQuestion.options.length > 0}>
-              {currentQuestion.options.map((option) => (
-                <div
-                  key={option.id}
-                  className="grid grid-cols-12 gap-x-3 w-[60%] items-center justify-items-start"
-                >
-                  <Input
-                    size="large"
-                    className={`col-span-8 ${
-                      option.content === currentQuestion.correctAnswer &&
-                      'border-green-600 border-[2px]'
-                    }`}
-                    value={option.content}
-                    onChange={(e) => {
-                      handleUpdateOptionAnswer(
-                        option.id,
-                        e.target.value,
-                        option.content === currentQuestion.correctAnswer,
-                      );
-                    }}
-                  />
-                  <Button
-                    variant="solid"
-                    className="col-span-1"
-                    color="danger"
-                    shape="default"
-                    onClick={() => {
-                      handleDeleteOptionAnswer(option.id);
-                    }}
-                    icon={<DeleteOutlined />}
-                  />
-                  <div className="col-span-3 flex flex-row justify-between items-center space-x-2">
-                    <Radio
-                      value={option.content}
-                      checked={option.content === currentQuestion.correctAnswer}
-                      onChange={(e) => {
-                        handleUpdateCorrectAnswer(e.target.value);
-                      }}
-                    />
-                    <Visibility
-                      visibility={
-                        option.content === currentQuestion.correctAnswer
-                      }
-                    >
-                      <span className="text-base font-semibold text-green-600">
-                        Correct answer
-                      </span>
-                    </Visibility>
-                  </div>
-                </div>
-              ))}
-            </Visibility>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              iconPosition="start"
-              onClick={handleAddNewOptionAnswer}
-            >
-              Add new option answer
-            </Button>
+            {renderAnswerSection()}
           </div>
         </div>
       )}

@@ -1,10 +1,9 @@
-import { IExam } from "./exam.types";
-
+import { IChapter } from './chapter.types';
 export interface ICourse {
   _id: string;
   name: string;
   description: string;
-  exams: IExam[];
+  chapters: IChapter[];
   __v: number;
   createdAt: string;
   updatedAt: string;

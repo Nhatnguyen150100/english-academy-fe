@@ -11,7 +11,10 @@ class ExamService {
     query: Record<string, any>,
   ): Promise<IBaseResponse<IPagination<IExamDetail>>> {
     try {
-      const rs = await axiosRequest.get(`${this._prefixURL}/list-exam-in-course/${courseId}`, { params: query });
+      const rs = await axiosRequest.get(
+        `${this._prefixURL}/list-exam-in-chapter/${courseId}`,
+        { params: query },
+      );
       return Promise.resolve(rs.data);
     } catch (error) {
       return Promise.reject(error);
@@ -52,9 +55,7 @@ class ExamService {
     }
   }
 
-  public async deleteExam(
-    examId: string,
-  ): Promise<IBaseResponse<any>> {
+  public async deleteExam(examId: string): Promise<IBaseResponse<any>> {
     try {
       const rs = await axiosRequest.delete(`${this._prefixURL}/${examId}`);
       return Promise.resolve(rs.data);

@@ -12,7 +12,7 @@ export default function ExamDetail() {
   const { examId } = useParams<{ examId: string }>();
   const [searchParams] = useSearchParams();
 
-  const courseId = searchParams.get('courseId');
+  const chapterId = searchParams.get('chapterId');
 
   const [exam, setExam] = useState<IExamDetail>();
   const [loading, setLoading] = useState<boolean>(false);
@@ -46,10 +46,10 @@ export default function ExamDetail() {
       <div className="flex w-full flex-col justify-center items-center space-y-5">
         <h1 className="font-bold text-3xl">Exam Detail</h1>
         <Visibility
-          visibility={Boolean(exam?._id && courseId)}
+          visibility={Boolean(exam?._id && chapterId)}
           suspenseComponent={loading ? <Spin /> : <Empty />}
         >
-          <ExamDetailSection examProps={exam} courseId={courseId!} />
+          <ExamDetailSection examProps={exam} chapterId={chapterId!} />
         </Visibility>
       </div>
     </>

@@ -10,10 +10,10 @@ import { formatDate } from '../../../../utils/functions/format-date';
 import DEFINE_ROUTERS from '../../../../constants/routers-mapper';
 
 interface IProps {
-  courseId: string;
+  chapterId: string;
 }
 
-export default function ExamManager({ courseId }: IProps) {
+export default function ExamManager({ chapterId }: IProps) {
   const [query, setQuery] = useState({
     page: 1,
     limit: 10,
@@ -107,8 +107,7 @@ export default function ExamManager({ courseId }: IProps) {
   const handleGetExamList = async () => {
     try {
       setLoading(true);
-      const rs = await examService.getExamList(courseId, query);
-      console.log('🚀 ~ handleGetExamList ~ rs:', rs);
+      const rs = await examService.getExamList(chapterId, query);
       setExamList(rs.data.data);
       setQuery((pre) => ({
         ...pre,
@@ -121,7 +120,7 @@ export default function ExamManager({ courseId }: IProps) {
 
   const handleClickRow = (exam: IExam) => {
     navigate(
-      `/admin/course-manager/exam-manager/${exam._id}?courseId=${courseId}`,
+      `/admin/course-manager/exam-manager/${exam._id}?chapterId=${chapterId}`,
     );
   };
 
@@ -138,7 +137,7 @@ export default function ExamManager({ courseId }: IProps) {
           icon={<PlusOutlined />}
           iconPosition="start"
           onClick={() => {
-            navigate(DEFINE_ROUTERS.newExam.replace(':courseId', courseId));
+            navigate(DEFINE_ROUTERS.newExam.replace(':chapterId', chapterId));
           }}
         >
           Add new exam

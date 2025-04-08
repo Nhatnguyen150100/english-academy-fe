@@ -1,8 +1,12 @@
-export type TLevel = "EASY" | "MEDIUM" | "HARD"
+import { IChapter } from './chapter.types';
+
+export type TLevel = 'EASY' | 'MEDIUM' | 'HARD';
+
+export type TExamType = 'MCQ' | 'ARRANGE';
 
 export interface IExam {
   _id: string;
-  courseId: string;
+  chapterId: string;
   name: string;
   description: string;
   timeExam: number;
@@ -14,7 +18,7 @@ export interface IExam {
 
 export interface IExamDetail {
   _id: string;
-  courseId: string;
+  chapterId: IChapter | string;
   name: string;
   description: string;
   timeExam: number;
@@ -32,10 +36,11 @@ export interface IOption {
 }
 
 export interface IQuestion {
+  type: TExamType;
   content: string;
   order: number;
   options: IOption[];
-  correctAnswer: string;
+  correctAnswer: string | string[];
   _id: string;
 }
 
@@ -43,7 +48,6 @@ export type TExamInfo = Pick<
   IExam,
   'name' | 'level' | 'timeExam' | 'description'
 >;
-
 
 export interface IExamRequest {
   name: string;
@@ -54,13 +58,15 @@ export interface IExamRequest {
 }
 
 export interface IQuestionRequest {
+  type: TExamType;
   content: string;
   order: number;
   options: IOptionsLocal[];
-  correctAnswer: string;
+  correctAnswer: string | string[];
+  isInitialOrder?: boolean;
 }
 
 export interface IOptionsLocal {
-  id: number,
-  content: string,
+  id: number;
+  content: string;
 }
