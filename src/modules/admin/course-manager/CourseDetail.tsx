@@ -13,10 +13,16 @@ import {
   List,
   Form,
   Input,
+  Modal,
+  InputNumber,
 } from 'antd';
 import CourseSection from './common/CourseSection';
 import ExamManager from './exam-manager/ExamManager';
-import { ArrowLeftOutlined, EditOutlined } from '@ant-design/icons';
+import {
+  ArrowLeftOutlined,
+  EditOutlined,
+  DeleteOutlined,
+} from '@ant-design/icons';
 import { IChapter } from '../../../types/chapter.types';
 
 export default function CourseDetail() {
@@ -27,31 +33,14 @@ export default function CourseDetail() {
   const navigate = useNavigate();
 
   const [editingChapter, setEditingChapter] = useState<IChapter | null>(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
 
-  const handleUpdateChapter = async (
-    chapterId: string,
-    values: Partial<IChapter>,
-  ) => {
-    try {
-      setLoading(true);
-      const response = await chapterService.updateChapter(chapterId, values);
-      message.success(response.message);
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
 
-      if (course) {
-        const updatedChapters = course.chapters.map((chapter) =>
-          chapter._id === chapterId ? { ...chapter, ...values } : chapter,
-        );
-        setCourse({ ...course, chapters: updatedChapters });
-      }
-
-      setEditingChapter(null);
-    } catch (error: any) {
-      message.error(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    handleGetCourseDetail();
+  }, []);
 
   const handleGetCourseDetail = async () => {
     if (!courseId) return;
@@ -64,9 +53,182 @@ export default function CourseDetail() {
     }
   };
 
-  useEffect(() => {
-    handleGetCourseDetail();
-  }, []);
+  const handleChapterAction = async (values: Partial<IChapter>) => {
+    try {
+      setLoading(true);
+      if (editingChapter) {
+        const response = await chapterService.updateChapter(
+          editingChapter._id,
+          values,
+        );
+        message.success(response.message);
+        if (course) {
+          const updatedChapters = course.chapters.map((chapter) =>
+            chapter._id === editingChapter._id
+              ? { ...chapter, ...values }
+              : chapter,
+          );
+          setCourse({ ...course, chapters: updatedChapters });
+        }
+      } else {
+        const response = await chapterService.createChapter({
+          ...values,
+          courseId: courseId!,
+        });
+        message.success(response.message);
+        handleGetCourseDetail();
+      }
+      handleCloseModal();
+    } catch (error: any) {
+      message.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteChapter = async (chapterId: string) => {
+    Modal.confirm({
+      title: 'Confirm deletion',
+      content: 'Are you sure you want to delete this chapter?',
+      async onOk() {
+        try {
+          await chapterService.deleteChapter(chapterId);
+          message.success('Chapter deleted successfully');
+          if (course) {
+            const updatedChapters = course.chapters.filter(
+              (chapter) => chapter._id !== chapterId,
+            );
+            setCourse({ ...course, chapters: updatedChapters });
+          }
+        } catch (error: any) {
+          message.error(error.message);
+        }
+      },
+    });
+  };
+
+  const handleOpenCreateModal = () => {
+    setIsCreatingNew(true);
+    form.resetFields();
+    setIsModalVisible(true);
+  };
+
+  const handleOpenEditModal = (chapter: IChapter) => {
+    setEditingChapter(chapter);
+    form.setFieldsValue(chapter);
+    setIsModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalVisible(false);
+    setEditingChapter(null);
+    setIsCreatingNew(false);
+  };
+
+  const ChapterList = ({ chapters }: { chapters: IChapter[] }) => (
+    <div className="space-y-4">
+      <Button type="primary" onClick={handleOpenCreateModal}>
+        Add New Chapter
+      </Button>
+      <List
+        dataSource={chapters}
+        renderItem={(chapter) => (
+          <List.Item
+            actions={[
+              <Button
+                icon={<EditOutlined />}
+                onClick={() => handleOpenEditModal(chapter)}
+              />,
+              <Button
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => handleDeleteChapter(chapter._id)}
+              />,
+              <Button onClick={() => setSelectedChapter(chapter)}>
+                View Exams
+              </Button>,
+            ]}
+          >
+            <List.Item.Meta
+              title={
+                <span>
+                  {chapter.title} (Order: {chapter.order})
+                </span>
+              }
+              description={chapter.description}
+            />
+          </List.Item>
+        )}
+      />
+    </div>
+  );
+
+  const ChapterModal = () => (
+    <Modal
+      title={`${isCreatingNew ? 'Create' : 'Edit'} Chapter`}
+      visible={isModalVisible}
+      onCancel={handleCloseModal}
+      footer={null}
+    >
+      <Form
+        form={form}
+        layout="vertical"
+        initialValues={{ order: 1 }}
+        onFinish={handleChapterAction}
+      >
+        <Form.Item
+          label="Title"
+          name="title"
+          rules={[{ required: true, message: 'Please input chapter title!' }]}
+        >
+          <Input />
+        </Form.Item>
+
+        <Form.Item
+          label="Description"
+          name="description"
+          rules={[
+            { required: true, message: 'Please input chapter description!' },
+          ]}
+        >
+          <Input.TextArea rows={4} />
+        </Form.Item>
+
+        <Form.Item
+          label="Order"
+          name="order"
+          rules={[{ required: true, message: 'Please input chapter order!' }]}
+        >
+          <InputNumber min={1} />
+        </Form.Item>
+
+        <div className="flex justify-end space-x-4">
+          <Button onClick={handleCloseModal}>Cancel</Button>
+          <Button type="primary" htmlType="submit">
+            {isCreatingNew ? 'Create' : 'Update'}
+          </Button>
+        </div>
+      </Form>
+    </Modal>
+  );
+
+  const tabContent = () => {
+    if (selectedChapter) {
+      return (
+        <div>
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={() => setSelectedChapter(null)}
+            style={{ marginBottom: 16 }}
+          >
+            Back to Chapters
+          </Button>
+          <ExamManager chapterId={selectedChapter._id} />
+        </div>
+      );
+    }
+    return <ChapterList chapters={course?.chapters || []} />;
+  };
 
   const handleSubmit = async (data: Record<string, any>) => {
     try {
@@ -80,103 +242,10 @@ export default function CourseDetail() {
     }
   };
 
-  const ChapterList = ({ chapters }: { chapters: IChapter[] }) => (
-    <List
-      dataSource={chapters}
-      renderItem={(chapter) => (
-        <List.Item
-          actions={[
-            <Button
-              icon={<EditOutlined />}
-              onClick={() => {
-                setEditingChapter(chapter);
-                form.setFieldsValue(chapter);
-              }}
-            />,
-            <Button onClick={() => setSelectedChapter(chapter)}>
-              View list exam
-            </Button>,
-          ]}
-        >
-          <List.Item.Meta
-            title={chapter.title}
-            description={chapter.description}
-          />
-        </List.Item>
-      )}
-    />
-  );
-
-  const ChapterEditForm = ({ chapter }: { chapter: IChapter }) => (
-    <div style={{ maxWidth: 600, margin: '0 auto' }}>
-      <Button
-        icon={<ArrowLeftOutlined />}
-        onClick={() => setEditingChapter(null)}
-        style={{ marginBottom: 16 }}
-      >
-        Quay lại
-      </Button>
-
-      <Form
-        form={form}
-        layout="vertical"
-        initialValues={chapter}
-        onFinish={(values) => handleUpdateChapter(chapter._id, values)}
-      >
-        <Form.Item
-          label="Chapter title"
-          name="title"
-          rules={[{ required: true, message: 'Please enter chapter title!' }]}
-        >
-          <Input />
-        </Form.Item>
-
-        <Form.Item
-          label="Description"
-          name="description"
-          rules={[
-            { required: true, message: 'Please enter chapter description!' },
-          ]}
-        >
-          <Input.TextArea rows={4} />
-        </Form.Item>
-
-        <Form.Item>
-          <Button type="primary" htmlType="submit">
-            Update
-          </Button>
-        </Form.Item>
-      </Form>
-    </div>
-  );
-
-  const tabContent = () => {
-    if (editingChapter) {
-      return <ChapterEditForm chapter={editingChapter} />;
-    }
-
-    if (selectedChapter) {
-      return (
-        <div>
-          <Button
-            icon={<ArrowLeftOutlined />}
-            onClick={() => setSelectedChapter(null)}
-            style={{ marginBottom: 16 }}
-          >
-            Back to list chapter
-          </Button>
-          <ExamManager chapterId={selectedChapter._id} />
-        </div>
-      );
-    }
-
-    return <ChapterList chapters={course?.chapters || []} />;
-  };
-
   const items: TabsProps['items'] = [
     {
       key: '1',
-      label: 'Course information',
+      label: 'Course Information',
       children: (
         <Visibility
           visibility={Boolean(course)}
@@ -188,7 +257,7 @@ export default function CourseDetail() {
     },
     {
       key: '2',
-      label: 'List chapters',
+      label: 'Chapters',
       children: (
         <Visibility
           visibility={Boolean(course)}
@@ -205,13 +274,13 @@ export default function CourseDetail() {
       <Button
         className="min-w-[220px]"
         icon={<ArrowLeftOutlined />}
-        onClick={() => {
-          navigate(-1);
-        }}
+        onClick={() => navigate(-1)}
       >
         Back
       </Button>
+
       <Tabs defaultActiveKey="1" items={items} />
+      <ChapterModal />
     </>
   );
 }

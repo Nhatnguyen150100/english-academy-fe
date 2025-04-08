@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Button, Modal, notification, Spin, Table, TableProps } from 'antd';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { IExam } from '../../../../types/exam.types';
+import { IExam, IExamDetail } from '../../../../types/exam.types';
 import { examService } from '../../../../services';
 import { onChooseLevel } from '../../../../utils/functions/on-choose-level-kanji';
 import { formatDate } from '../../../../utils/functions/format-date';
@@ -20,11 +20,11 @@ export default function ExamManager({ chapterId }: IProps) {
     name: '',
     total: 0,
   });
-  const [examList, setExamList] = useState<IExam[]>([]);
+  const [examList, setExamList] = useState<IExamDetail[]>([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleDeleteExam = (exam: IExam) => {
+  const handleDeleteExam = (exam: IExamDetail) => {
     Modal.confirm({
       title: 'Are you sure you want to delete this exam?',
       content: `Exam: ${exam.name}`,
@@ -49,7 +49,7 @@ export default function ExamManager({ chapterId }: IProps) {
     });
   };
 
-  const columns: TableProps<IExam>['columns'] = [
+  const columns: TableProps<IExamDetail>['columns'] = [
     {
       title: 'Index',
       dataIndex: 'index',
@@ -88,7 +88,7 @@ export default function ExamManager({ chapterId }: IProps) {
     {
       title: 'Delete exam',
       key: 'deleteExam',
-      render: (_, exam: IExam) => (
+      render: (_, exam: IExamDetail) => (
         <Button
           onClick={(e) => {
             e.stopPropagation();
@@ -118,7 +118,7 @@ export default function ExamManager({ chapterId }: IProps) {
     }
   };
 
-  const handleClickRow = (exam: IExam) => {
+  const handleClickRow = (exam: IExamDetail) => {
     navigate(
       `/admin/course-manager/exam-manager/${exam._id}?chapterId=${chapterId}`,
     );
@@ -147,7 +147,7 @@ export default function ExamManager({ chapterId }: IProps) {
         <Spin />
       ) : (
         <div className="w-full">
-          <Table<IExam>
+          <Table<IExamDetail>
             rowKey="id"
             className="cursor-pointer"
             columns={columns}

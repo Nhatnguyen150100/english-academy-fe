@@ -44,6 +44,15 @@ class ChapterService {
     }
   }
 
+  public async deleteChapter(id: string): Promise<IBaseResponse<IChapter>> {
+    try {
+      const rs = await axiosRequest.delete(`${this._prefixURL}/${id}`);
+      return Promise.resolve(rs.data);
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+
   public async getChapterDetail(
     courseId: string,
   ): Promise<IBaseResponse<IChapter>> {

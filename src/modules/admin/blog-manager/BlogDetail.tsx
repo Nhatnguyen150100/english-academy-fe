@@ -50,7 +50,6 @@ export default function BlogDetail({}: Props) {
             <div className="w-full p-6 bg-white rounded-lg shadow-md">
               <h2 className="text-3xl font-bold mb-4">{blog.title}</h2>
 
-              {/* Metadata Section */}
               <div className="flex justify-between items-start mb-6">
                 <div className="space-y-2">
                   <p className="text-gray-600">
@@ -83,7 +82,6 @@ export default function BlogDetail({}: Props) {
                 </span>
               </div>
 
-              {/* Thumbnail */}
               <div className="w-full flex justify-center items-center">
                 <img
                   src={blog.thumbnail}
@@ -92,10 +90,8 @@ export default function BlogDetail({}: Props) {
                 />
               </div>
 
-              {/* Description */}
               <p className="text-lg text-gray-700 mb-6">{blog.description}</p>
 
-              {/* Content */}
               <div
                 className="prose max-w-none"
                 dangerouslySetInnerHTML={{ __html: blog.content }}

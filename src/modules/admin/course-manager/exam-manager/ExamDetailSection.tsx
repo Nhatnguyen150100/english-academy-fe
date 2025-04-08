@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Button, Input, message, Radio, Select, Tag } from 'antd';
+import { Button, Input, message, Radio, Select, Tag, Tooltip } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
 import {
   ArrowLeftOutlined,
@@ -86,8 +86,16 @@ export default function ExamDetailSection({ chapterId, examProps }: IProps) {
   const handleUpdateQuestionType = (type: TExamType) => {
     const updatedQuestion: IQuestionRequest = {
       ...currentQuestion!,
+      content:
+        type === 'ARRANGE'
+          ? 'Arrange the words into meaningful sentences.'
+          : '',
       type,
-      correctAnswer: type === 'MCQ' ? '' : [],
+      correctAnswer:
+        type === 'MCQ'
+          ? currentQuestion?.options[0]?.content || ''
+          : currentQuestion?.options.map((option) => option.content) || [],
+      options: currentQuestion?.options ?? [],
     };
     const updatedListQuestions = listQuestions.map((question) =>
       question.order === currentOrder ? updatedQuestion : question,
@@ -243,10 +251,10 @@ export default function ExamDetailSection({ chapterId, examProps }: IProps) {
 
       case 'ARRANGE':
         return (
-          <div className="space-y-4">
-            <div className="flex flex-col space-y-2">
-              <span className="font-semibold">Các thành phần:</span>
-              {currentQuestion.options.map((option, index) => (
+          <div className="space-y-4 w-full">
+            <div className="flex flex-col space-y-2 max-w-xl">
+              <span className="font-semibold">List options:</span>
+              {currentQuestion.options.map((option) => (
                 <div key={option.id} className="flex items-center gap-2 mb-2">
                   <Input
                     value={option.content}
@@ -266,12 +274,12 @@ export default function ExamDetailSection({ chapterId, examProps }: IProps) {
                 </div>
               ))}
               <Button onClick={handleAddNewOptionAnswer}>
-                Thêm thành phần
+                Add new option answer
               </Button>
             </div>
 
             <div className="flex flex-col space-y-2">
-              <span className="font-semibold">Thứ tự đúng:</span>
+              <span className="font-semibold">Correct order:</span>
               <DndContext onDragEnd={handleDragEnd}>
                 <SortableContext
                   items={
@@ -281,19 +289,23 @@ export default function ExamDetailSection({ chapterId, examProps }: IProps) {
                   }
                   strategy={verticalListSortingStrategy}
                 >
-                  {isArrayOfStrings(currentQuestion.correctAnswer) &&
-                    currentQuestion.correctAnswer?.map((answer, index) => (
-                      <div
-                        key={`${answer}-${index}`}
-                        className="flex items-center gap-2 mb-2"
-                      >
-                        <SortableItem key={answer} id={answer}>
-                          <Tag className="px-2 py-1" color="blue-inverse">
-                            {answer}
-                          </Tag>
-                        </SortableItem>
-                      </div>
-                    ))}
+                  <div className="w-full flex flex-row flex-wrap gap-1">
+                    {isArrayOfStrings(currentQuestion.correctAnswer) &&
+                      currentQuestion.correctAnswer?.map((answer, index) => (
+                        <Tooltip
+                          key={`${answer}-${index}`}
+                          title="Drag and drop to move option"
+                        >
+                          <div className="flex items-center">
+                            <SortableItem key={answer} id={answer}>
+                              <Tag className="px-2 py-1" color="blue">
+                                {answer}
+                              </Tag>
+                            </SortableItem>
+                          </div>
+                        </Tooltip>
+                      ))}
+                  </div>
                 </SortableContext>
               </DndContext>
             </div>
@@ -525,13 +537,7 @@ export default function ExamDetailSection({ chapterId, examProps }: IProps) {
             <span className="text-lg font-semibold">Content of exam</span>
             <Input
               size="large"
-              value={
-                currentQuestion.content
-                  ? currentQuestion.content
-                  : currentQuestion.type === 'ARRANGE'
-                  ? 'Arrange the words into meaningful sentences.'
-                  : ''
-              }
+              value={currentQuestion.content}
               onChange={(e) => {
                 setListQuestions((pre) => {
                   const updatedQuestion = pre.map((item) => {
