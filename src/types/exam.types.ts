@@ -62,11 +62,11 @@ export interface IQuestionRequest {
   content: string;
   order: number;
   options: IOptionsLocal[];
-  correctAnswer: string | string[];
+  correctAnswer: any;
   isInitialOrder?: boolean;
 }
 
 export interface IOptionsLocal {
-  id: number;
+  id: number | string;
   content: string;
 }

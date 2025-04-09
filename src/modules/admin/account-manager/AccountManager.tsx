@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   Button,
+  Checkbox,
   Modal,
   notification,
   Spin,
@@ -10,14 +11,8 @@ import {
   Tooltip,
 } from 'antd';
 import BaseSearch from '../../../components/base/BaseSearch';
-import {
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  DeleteOutlined,
-  PlusOutlined,
-} from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
-import { authService, blogService } from '../../../services';
+import { CheckCircleOutlined } from '@ant-design/icons';
+import { authService } from '../../../services';
 import { IUser } from '../../../types/user.types';
 
 export default function AccountManager() {
@@ -26,10 +21,10 @@ export default function AccountManager() {
     limit: 10,
     name: '',
     total: 0,
+    isRequestChangeToPremium: false,
   });
   const [userList, setListUser] = useState<IUser[]>([]);
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const handleChangeStatus = async (
     _item: IUser,
@@ -103,6 +98,15 @@ export default function AccountManager() {
       ),
     },
     {
+      title: 'Request from user',
+      key: 'isRequestChangeToPremium',
+      dataIndex: 'isRequestChangeToPremium',
+      render: (isChange) => {
+        if (isChange) return <Tag color="geekblue">Request to premium</Tag>;
+        return null;
+      },
+    },
+    {
       title: 'Action',
       align: 'center',
       key: 'status',
@@ -149,7 +153,7 @@ export default function AccountManager() {
 
   useEffect(() => {
     handleGetListUser();
-  }, [query.page]);
+  }, [query.page, query.isRequestChangeToPremium]);
 
   return (
     <div className="flex flex-col justify-start items-center space-y-5">
@@ -163,6 +167,17 @@ export default function AccountManager() {
           }}
           onSearch={() => handleGetListUser()}
         />
+        <Checkbox
+          value={query.isRequestChangeToPremium}
+          onChange={(event) => {
+            setQuery({
+              ...query,
+              isRequestChangeToPremium: event.target.checked,
+            });
+          }}
+        >
+          Search user request account to PREMIUM
+        </Checkbox>
       </div>
       {loading ? (
         <Spin />

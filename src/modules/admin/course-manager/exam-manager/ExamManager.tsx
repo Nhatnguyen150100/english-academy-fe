@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Button, Modal, notification, Spin, Table, TableProps } from 'antd';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { IExam, IExamDetail } from '../../../../types/exam.types';
+import { IExamDetail } from '../../../../types/exam.types';
 import { examService } from '../../../../services';
 import { onChooseLevel } from '../../../../utils/functions/on-choose-level-kanji';
 import { formatDate } from '../../../../utils/functions/format-date';

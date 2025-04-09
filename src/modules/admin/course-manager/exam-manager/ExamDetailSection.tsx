@@ -35,6 +35,14 @@ interface IProps {
 
 const STARTED_QUESTION_DEFAULT = 1;
 
+export function generateId(length: number = 16): string {
+  const chars =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const array = new Uint8Array(length);
+  crypto.getRandomValues(array);
+  return Array.from(array, (byte) => chars[byte % chars.length]).join('');
+}
+
 export default function ExamDetailSection({ chapterId, examProps }: IProps) {
   const navigate = useNavigate();
   const [examInfo, setExamInfo] = useState<TExamInfo>({
@@ -54,7 +62,10 @@ export default function ExamDetailSection({ chapterId, examProps }: IProps) {
         })),
         correctAnswer:
           q.type === 'ARRANGE'
-            ? (q.correctAnswer as string[]).map(String)
+            ? (q.correctAnswer as string[]).map((value) => ({
+                id: generateId(),
+                content: value,
+              }))
             : q.correctAnswer,
       }),
     ) ?? [],
@@ -94,7 +105,7 @@ export default function ExamDetailSection({ chapterId, examProps }: IProps) {
       correctAnswer:
         type === 'MCQ'
           ? currentQuestion?.options[0]?.content || ''
-          : currentQuestion?.options.map((option) => option.content) || [],
+          : currentQuestion?.options || [],
       options: currentQuestion?.options ?? [],
     };
     const updatedListQuestions = listQuestions.map((question) =>
@@ -104,15 +115,13 @@ export default function ExamDetailSection({ chapterId, examProps }: IProps) {
   };
 
   const onCheckDuplicateAnswer = (value: string) => {
-    const isDuplicate =
-      currentQuestion?.type === 'MCQ'
-        ? currentQuestion?.correctAnswer === value
-        : currentQuestion?.correctAnswer.includes(value);
+    if (currentQuestion?.type === 'ARRANGE') return false;
+    const isDuplicate = currentQuestion?.correctAnswer === value;
     return isDuplicate;
   };
 
   const handleUpdateOptionContent = (
-    id: number,
+    id: number | string,
     value: string,
     isCorrectAnswer: boolean,
   ) => {
@@ -132,9 +141,7 @@ export default function ExamDetailSection({ chapterId, examProps }: IProps) {
         ) ?? [],
     };
     if (updatedQuestion.type === 'ARRANGE') {
-      updatedQuestion.correctAnswer = updatedQuestion.options.map(
-        (opt) => opt.content,
-      );
+      updatedQuestion.correctAnswer = updatedQuestion.options;
     }
     const updatedListQuestions = listQuestions?.map((question) => {
       return question.order === currentOrder ? updatedQuestion : question;
@@ -142,7 +149,7 @@ export default function ExamDetailSection({ chapterId, examProps }: IProps) {
     setListQuestions(updatedListQuestions);
   };
 
-  const handleUpdateCorrectAnswer = (value: string | string[]) => {
+  const handleUpdateCorrectAnswer = (value: string) => {
     const updatedQuestion: IQuestionRequest = {
       ...currentQuestion!,
       correctAnswer: value,
@@ -158,15 +165,16 @@ export default function ExamDetailSection({ chapterId, examProps }: IProps) {
 
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      const oldIndex = currentQuestion.correctAnswer.indexOf(
-        active.id.toString(),
+      const oldIndex = currentQuestion.correctAnswer.findIndex(
+        (_item: any) => _item.id.toString() === active.id.toString(),
       );
-      const newIndex = currentQuestion.correctAnswer.indexOf(
-        over.id.toString(),
+
+      const newIndex = currentQuestion.correctAnswer.findIndex(
+        (_item: any) => _item.id.toString() === over.id.toString(),
       );
 
       const newCorrectAnswer = arrayMove(
-        currentQuestion.correctAnswer as string[],
+        currentQuestion.correctAnswer,
         oldIndex,
         newIndex,
       );
@@ -282,29 +290,24 @@ export default function ExamDetailSection({ chapterId, examProps }: IProps) {
               <span className="font-semibold">Correct order:</span>
               <DndContext onDragEnd={handleDragEnd}>
                 <SortableContext
-                  items={
-                    isArrayOfStrings(currentQuestion.correctAnswer)
-                      ? currentQuestion.correctAnswer
-                      : []
-                  }
+                  items={currentQuestion.correctAnswer}
                   strategy={verticalListSortingStrategy}
                 >
                   <div className="w-full flex flex-row flex-wrap gap-1">
-                    {isArrayOfStrings(currentQuestion.correctAnswer) &&
-                      currentQuestion.correctAnswer?.map((answer, index) => (
-                        <Tooltip
-                          key={`${answer}-${index}`}
-                          title="Drag and drop to move option"
-                        >
-                          <div className="flex items-center">
-                            <SortableItem key={answer} id={answer}>
-                              <Tag className="px-2 py-1" color="blue">
-                                {answer}
-                              </Tag>
-                            </SortableItem>
-                          </div>
-                        </Tooltip>
-                      ))}
+                    {currentQuestion.correctAnswer.map((answer: any) => (
+                      <Tooltip
+                        key={answer.id}
+                        title="Drag and drop to move option"
+                      >
+                        <div className="flex items-center">
+                          <SortableItem id={answer.id}>
+                            <Tag className="px-2 py-1" color="blue">
+                              {answer.content}
+                            </Tag>
+                          </SortableItem>
+                        </div>
+                      </Tooltip>
+                    ))}
                   </div>
                 </SortableContext>
               </DndContext>
@@ -372,7 +375,7 @@ export default function ExamDetailSection({ chapterId, examProps }: IProps) {
     setListQuestions(updatedListQuestions);
   };
 
-  const handleDeleteOptionAnswer = (id: number) => {
+  const handleDeleteOptionAnswer = (id: number | string) => {
     const updatedOptions =
       currentQuestion?.options
         .filter((option) => option.id !== id)
@@ -407,19 +410,7 @@ export default function ExamDetailSection({ chapterId, examProps }: IProps) {
       message.error('Please add at least one question before submitting');
       return;
     }
-    const invalidArrange = listQuestions.some(
-      (question) =>
-        question.type === 'ARRANGE' &&
-        (!Array.isArray(question.correctAnswer) ||
-          question.correctAnswer.some(
-            (ans) => !question.options.some((opt) => opt.content === ans),
-          )),
-    );
 
-    if (invalidArrange) {
-      message.error('Một số câu sắp xếp có đáp án không khớp với options');
-      return;
-    }
     try {
       setLoading(true);
       const data = {
@@ -434,7 +425,9 @@ export default function ExamDetailSection({ chapterId, examProps }: IProps) {
           options: question.options.map((option) => ({
             content: option.content,
           })),
-          correctAnswer: question.correctAnswer,
+          correctAnswer: question.correctAnswer.map(
+            (_item: any) => _item.content,
+          ),
         })),
       };
       const rs = examProps?._id
