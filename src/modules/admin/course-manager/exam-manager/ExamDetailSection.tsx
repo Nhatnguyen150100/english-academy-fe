@@ -425,9 +425,10 @@ export default function ExamDetailSection({ chapterId, examProps }: IProps) {
           options: question.options.map((option) => ({
             content: option.content,
           })),
-          correctAnswer: question.correctAnswer.map(
-            (_item: any) => _item.content,
-          ),
+          correctAnswer:
+            question.type === 'MCQ'
+              ? question.correctAnswer
+              : question.correctAnswer.map((_item: any) => _item.content),
         })),
       };
       const rs = examProps?._id
