@@ -10,7 +10,6 @@ export default function AccountManager() {
     limit: 10,
     name: '',
     total: 0,
-    isRequestChangeToPremium: false,
   });
   const [userList, setListUser] = useState<IUser[]>([]);
   const [loading, setLoading] = useState(false);
@@ -94,12 +93,12 @@ export default function AccountManager() {
 
   useEffect(() => {
     handleGetListUser();
-  }, [query.page, query.isRequestChangeToPremium]);
+  }, [query.page]);
 
   return (
     <div className="flex flex-col justify-start items-center space-y-5">
       <h1 className="font-bold text-3xl">Account Manager</h1>
-      <div className="flex flex-row justify-between items-center w-full">
+      <div className="flex flex-row justify-start items-center w-full">
         <BaseSearch
           value={query.name!}
           placeholder="Input search text"
@@ -108,17 +107,6 @@ export default function AccountManager() {
           }}
           onSearch={() => handleGetListUser()}
         />
-        <Checkbox
-          value={query.isRequestChangeToPremium}
-          onChange={(event) => {
-            setQuery({
-              ...query,
-              isRequestChangeToPremium: event.target.checked,
-            });
-          }}
-        >
-          Search user request account to PREMIUM
-        </Checkbox>
       </div>
       {loading ? (
         <Spin />
