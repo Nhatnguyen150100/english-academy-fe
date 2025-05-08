@@ -1,9 +1,7 @@
 // src/pages/StatisticsManager.tsx
 import { useEffect, useState } from 'react';
-import { Card, Row, Col, Statistic } from 'antd';
+import { Card, Row, Col, Statistic, Spin } from 'antd';
 import {
-  PieChart,
-  Pie,
   BarChart,
   Bar,
   Cell,
@@ -11,11 +9,19 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  CartesianGrid,
 } from 'recharts';
 import { IUser } from '../../types/user.types';
 import { IBlogInfo } from '../../types/blogs.types';
 import { ICourse } from '../../types/course.type';
-import { FaUsers, FaChartPie, FaBlog, FaBookOpen } from 'react-icons/fa';
+import {
+  FaUsers,
+  FaChartPie,
+  FaBlog,
+  FaBlogger,
+  FaBookOpen,
+} from 'react-icons/fa';
+import { authService, blogService, courseService } from '../../services';
 
 const cardStyle = `
   bg-gradient-to-br from-white to-blue-50 
@@ -95,15 +101,45 @@ const generateMockData = () => {
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const StatisticsManager = () => {
+  const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<IUser[]>([]);
   const [blogs, setBlogs] = useState<IBlogInfo[]>([]);
   const [courses, setCourses] = useState<ICourse[]>([]);
 
+  const handleGetData = async () => {
+    try {
+      const user = await authService.getListUser({
+        page: 1,
+        limit: 100000,
+      });
+      const courses = await courseService.getAllCourse({
+        page: 1,
+        limit: 100000,
+      });
+      const blogs = await blogService.getAllBlogs({
+        page: 1,
+        limit: 100000,
+      });
+      setUsers(user.data.data);
+      setCourses(courses.data.data);
+      setBlogs(blogs.data.data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Spin size="large" tip="Loading..." />
+      </div>
+    );
+  }
+
   useEffect(() => {
-    const { users, blogs, courses } = generateMockData();
-    setUsers(users);
-    setBlogs(blogs);
-    setCourses(courses);
+    handleGetData();
   }, []);
 
   const userStats = {
@@ -141,8 +177,8 @@ const StatisticsManager = () => {
   };
 
   const userChartData = [
-    { name: 'Premium', value: userStats.premium },
     { name: 'Free', value: userStats.free },
+    { name: 'Premium', value: userStats.premium },
   ];
 
   const examChartData = Object.entries(examStats.byLevel).map(
@@ -154,7 +190,7 @@ const StatisticsManager = () => {
   );
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="min-h-screen">
       <h1 className="text-3xl font-bold mb-8 flex items-center gap-3 text-blue-800">
         <FaChartPie className="text-4xl" />
         Statistics Dashboard
@@ -193,44 +229,34 @@ const StatisticsManager = () => {
                         {userStats.premium}
                       </span>
                     </div>
-                    <div className="bg-orange-50 px-3 py-2 rounded-lg">
-                      <span className="font-medium text-orange-700">
-                        Pending:
-                      </span>
-                      <span className="text-xl font-bold ml-2 text-orange-900">
-                        {userStats.pendingRequests}
-                      </span>
-                    </div>
                   </div>
                 </div>
                 <div className="flex-1 h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={userChartData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={100}
-                        paddingAngle={5}
-                        dataKey="value"
-                        animationBegin={200}
-                      >
-                        {userChartData.map((_, index) => (
-                          <Cell
-                            key={index}
-                            fill={COLORS[index % COLORS.length]}
-                            strokeWidth={0}
-                          />
-                        ))}
-                      </Pie>
+                    <BarChart data={userChartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" tick={{ fill: '#6b7280' }} />
+                      <YAxis tick={{ fill: '#6b7280' }} />
                       <Tooltip
+                        cursor={{ fill: 'rgba(0,0,0,0.05)' }}
                         contentStyle={{
                           borderRadius: '12px',
                           boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
                         }}
                       />
-                    </PieChart>
+                      <Bar
+                        dataKey="value"
+                        radius={[6, 6, 0, 0]}
+                        animationBegin={200}
+                      >
+                        {userChartData.map((item, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={item.name === 'Free' ? '#3b82f6' : '#fbbf24'}
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
                   </ResponsiveContainer>
                 </div>
               </div>
@@ -307,17 +333,31 @@ const StatisticsManager = () => {
         {/* Blog Statistics */}
         <Col xs={24} md={12}>
           <Card className={cardStyle + ' h-full'}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="bg-green-100 p-3 rounded-xl">
-                <FaBlog className="text-3xl text-green-600" />
+            <div className="flex flex-row justify-between items-center gap-3 mb-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="bg-yellow-100 p-3 rounded-xl">
+                  <FaBlogger className="text-3xl text-yellow-500" />
+                </div>
+                <Statistic
+                  title={
+                    <span className="text-lg font-semibold">Total blogs</span>
+                  }
+                  value={blogs.length}
+                  valueStyle={{ fontSize: '28px', color: '#065f46' }}
+                />
               </div>
-              <Statistic
-                title={
-                  <span className="text-lg font-semibold">Total Likes</span>
-                }
-                value={blogStats.totalLikes}
-                valueStyle={{ fontSize: '28px', color: '#065f46' }}
-              />
+              <div className="flex items-center gap-3 mb-4">
+                <div className="bg-green-100 p-3 rounded-xl">
+                  <FaBlog className="text-3xl text-green-600" />
+                </div>
+                <Statistic
+                  title={
+                    <span className="text-lg font-semibold">Total Likes</span>
+                  }
+                  value={blogStats.totalLikes}
+                  valueStyle={{ fontSize: '28px', color: '#065f46' }}
+                />
+              </div>
             </div>
 
             <div className="h-48 mb-4">
@@ -330,7 +370,11 @@ const StatisticsManager = () => {
                     fill="#10b981"
                     radius={[6, 6, 0, 0]}
                     animationBegin={200}
-                  />
+                  >
+                    {blogStatusData.map((_, index) => (
+                      <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Bar>
                   <Tooltip
                     contentStyle={{
                       borderRadius: '12px',

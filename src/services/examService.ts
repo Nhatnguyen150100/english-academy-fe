@@ -6,6 +6,19 @@ import { IPagination } from './pagination.types';
 class ExamService {
   private _prefixURL = '/v1/exams';
 
+  public async getAllExam(
+    query: Record<string, any>,
+  ): Promise<IBaseResponse<any>> {
+    try {
+      const rs = await axiosRequest.get(`${this._prefixURL}/`, {
+        params: query,
+      });
+      return Promise.resolve(rs.data);
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+
   public async getExamList(
     courseId: string,
     query: Record<string, any>,
