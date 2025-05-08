@@ -12,6 +12,7 @@ import NewCourse from '../modules/admin/course-manager/NewCourse';
 import ExamDetail from '../modules/admin/course-manager/exam-manager/ExamDetail';
 import NewExam from '../modules/admin/course-manager/exam-manager/NewExam';
 import BlogDetail from '../modules/admin/blog-manager/BlogDetail';
+import StatisticsManager from '../modules/admin/StatisticsManager';
 
 const router = createBrowserRouter([
   {
@@ -26,6 +27,10 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
+        element: <StatisticsManager />,
+      },
+      {
+        path: DEFINE_ROUTERS.accountManager,
         element: <AccountManager />,
       },
       {

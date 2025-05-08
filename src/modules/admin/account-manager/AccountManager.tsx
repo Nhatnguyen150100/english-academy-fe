@@ -1,17 +1,6 @@
 import { useEffect, useState } from 'react';
-import {
-  Button,
-  Checkbox,
-  Modal,
-  notification,
-  Spin,
-  Table,
-  TableProps,
-  Tag,
-  Tooltip,
-} from 'antd';
+import { Checkbox, Spin, Table, TableProps, Tag } from 'antd';
 import BaseSearch from '../../../components/base/BaseSearch';
-import { CheckCircleOutlined } from '@ant-design/icons';
 import { authService } from '../../../services';
 import { IUser } from '../../../types/user.types';
 
@@ -25,34 +14,6 @@ export default function AccountManager() {
   });
   const [userList, setListUser] = useState<IUser[]>([]);
   const [loading, setLoading] = useState(false);
-
-  const handleChangeStatus = async (
-    _item: IUser,
-    status: 'FREE' | 'PREMIUM',
-  ) => {
-    Modal.confirm({
-      title: `Are you sure you want to change account to ${status}?`,
-      content: `Account: ${_item.email}`,
-      okText: 'Yes',
-      okType: 'danger',
-      cancelText: 'No',
-      onOk: async () => {
-        try {
-          const rs = await authService.updateAccountType(_item._id, status);
-          notification.success({
-            message: 'Success',
-            description: rs.message,
-          });
-          handleGetListUser();
-        } catch (error) {
-          notification.error({
-            message: 'Error',
-            description: 'Failed to update status.',
-          });
-        }
-      },
-    });
-  };
 
   const columns: TableProps<IUser>['columns'] = [
     {
@@ -98,41 +59,21 @@ export default function AccountManager() {
       ),
     },
     {
-      title: 'Request from user',
-      key: 'isRequestChangeToPremium',
-      dataIndex: 'isRequestChangeToPremium',
-      render: (isChange) => {
-        if (isChange) return <Tag color="geekblue">Request to premium</Tag>;
-        return null;
-      },
-    },
-    {
-      title: 'Action',
-      align: 'center',
-      key: 'status',
-      render: (_, item: IUser) => (
-        <Tooltip
-          title={`Change account type to ${
-            item.accountType === 'FREE' ? 'PREMIUM' : 'FREE'
-          }`}
-        >
-          <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleChangeStatus(
-                item,
-                item.accountType === 'FREE' ? 'PREMIUM' : 'FREE',
-              );
-            }}
-            className="ms-3"
-            variant="solid"
-            color={item.accountType === 'FREE' ? 'orange' : 'green'}
-            shape="default"
-            icon={<CheckCircleOutlined />}
-          >
-            Change to {item.accountType === 'FREE' ? 'PREMIUM' : 'FREE'}
-          </Button>
-        </Tooltip>
+      title: 'Time expire',
+      key: 'premiumExpiresAt',
+      dataIndex: 'premiumExpiresAt',
+      render: (text) => (
+        <span className="text-xl font-semibold">
+          {text
+            ? new Date(text).toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            : ''}
+        </span>
       ),
     },
   ];

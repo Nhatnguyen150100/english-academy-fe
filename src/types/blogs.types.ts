@@ -12,9 +12,17 @@ export interface IBlogInfo {
   __v: number;
   createdAt: string;
   updatedAt: string;
+  comments: IComment[];
+  likes: string[];
 }
 
 export type IBlogDetail = IBlogInfo & {
   userId: IUser;
   content: string;
 };
+
+export interface IComment {
+  userId: IUser;
+  commentText: string;
+  createdAt: string;
+}

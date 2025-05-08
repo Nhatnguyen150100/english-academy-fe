@@ -1,11 +1,16 @@
-import { Link, useLocation } from "react-router-dom";
-import { AuditOutlined, FormOutlined, LoginOutlined, UserOutlined } from "@ant-design/icons";
-import { Divider } from "antd";
-import DEFINE_ROUTERS from "../../constants/routers-mapper";
-import cookiesStore from "../../plugins/cookiesStore";
-import isChildUrl from "../../utils/functions/check-active-router";
-import { useDispatch } from "react-redux";
-import { clearUser } from "../../lib/reducer/userSlice";
+import { Link, useLocation } from 'react-router-dom';
+import {
+  AuditOutlined,
+  FormOutlined,
+  LoginOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
+import { Divider } from 'antd';
+import DEFINE_ROUTERS from '../../constants/routers-mapper';
+import cookiesStore from '../../plugins/cookiesStore';
+import isChildUrl from '../../utils/functions/check-active-router';
+import { useDispatch } from 'react-redux';
+import { clearUser } from '../../lib/reducer/userSlice';
 
 const Sidebar = () => {
   const dispatch = useDispatch();
@@ -14,24 +19,29 @@ const Sidebar = () => {
   const menuItems = [
     {
       path: DEFINE_ROUTERS.admin,
-      label: "Account manager",
+      label: 'Statistics management',
+      icon: <UserOutlined />,
+    },
+    {
+      path: DEFINE_ROUTERS.accountManager,
+      label: 'Account manager',
       icon: <UserOutlined />,
     },
     {
       path: DEFINE_ROUTERS.blogManager,
-      label: "Blog manager",
+      label: 'Blog manager',
       icon: <FormOutlined />,
     },
     {
       path: DEFINE_ROUTERS.courseManager,
-      label: "Course manager",
+      label: 'Course manager',
       icon: <AuditOutlined />,
     },
   ];
 
   const handleLogOut = () => {
-    cookiesStore.remove("admin");
-    cookiesStore.remove("access_token");
+    cookiesStore.remove('admin');
+    cookiesStore.remove('access_token');
     window.location.href = DEFINE_ROUTERS.home;
     dispatch(clearUser());
   };
@@ -50,7 +60,7 @@ const Sidebar = () => {
               key={item.path}
               to={item.path}
               className={`flex items-center py-3 px-4 hover:bg-white hover:text-blue-950 transition-colors rounded-2xl ${
-                isActive ? "bg-white text-blue-950" : ""
+                isActive ? 'bg-white text-blue-950' : ''
               }`}
             >
               <span className="mr-2">{item.icon}</span>

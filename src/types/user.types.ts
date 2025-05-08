@@ -7,6 +7,7 @@ export interface IUser {
   score: number;
   accountType: 'FREE' | 'PREMIUM';
   isRequestChangeToPremium: boolean;
+  premiumExpiresAt?: Date;
   address: string;
   __v: number;
   createdAt: string;

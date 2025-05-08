@@ -3,6 +3,7 @@ const DEFINE_ROUTERS = {
   admin: '/admin',
   loginAdmin: '/admin/auth/login',
   accountManager: '/admin/account-manager',
+  statisticsManager: '/admin/statistics-manager',
 
   blogManager: '/admin/blogs-manager',
   blogDetail: '/admin/blogs-manager/:blogId',
