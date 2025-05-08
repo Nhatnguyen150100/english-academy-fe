@@ -3,6 +3,7 @@ import {
   AuditOutlined,
   FormOutlined,
   LoginOutlined,
+  PieChartOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 import { Divider } from 'antd';
@@ -20,7 +21,7 @@ const Sidebar = () => {
     {
       path: DEFINE_ROUTERS.admin,
       label: 'Statistics management',
-      icon: <UserOutlined />,
+      icon: <PieChartOutlined />,
     },
     {
       path: DEFINE_ROUTERS.accountManager,
