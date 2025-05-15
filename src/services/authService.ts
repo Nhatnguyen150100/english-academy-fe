@@ -1,5 +1,6 @@
 import axiosRequest from '../plugins/request';
 import { IChangePass, ILogin, IResponseLogin } from '../types/auth.tyes';
+import { IPaymentStatistic } from '../types/payment';
 import { IBaseResponse } from '../types/response.types';
 import { IUser } from '../types/user.types';
 import onRemoveParams from '../utils/functions/on-remove-params';
@@ -21,6 +22,19 @@ class AuthService {
     try {
       const rs = await axiosRequest.get(`${this._prefixURL}/list-user`, {
         params: onRemoveParams(parameters),
+      });
+      return Promise.resolve(rs.data);
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+
+  public async statisticPayment(type: "daily" | "monthly" | "yearly"): Promise<IBaseResponse<IPaymentStatistic>> {
+    try {
+      const rs = await axiosRequest.get(`${this._prefixURL}/statistic`, {
+        params: {
+          type
+        },
       });
       return Promise.resolve(rs.data);
     } catch (error) {
